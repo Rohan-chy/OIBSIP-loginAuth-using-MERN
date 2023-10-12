@@ -13,31 +13,36 @@ app.use(express.urlencoded({extended:true}))
 connectDatabase()
 
 app.post('/register',async(req,res)=>{
-    const {username,email,password,confirm_password}=req.body;
-    // console.log(req.body)
-
-    if(!username || !email || !password || !confirm_password){
-        return res.status(401).json({message:"please provide username email and password"})
+    try {
+        const {username,email,password,confirm_password}=req.body;
+        // console.log(req.body)
+    
+        if(!username || !email || !password || !confirm_password){
+            return res.status(401).json({message:"please provide username email and password"})
+        }
+        if (password !== confirm_password){
+            return res.status(401).json({message:"password not matched"})
+        }
+        const alreadyRegistered=await User.find({email:email});
+        if(alreadyRegistered.length>0){
+            return res.status(401).json({message:"already registered"})
+        }
+        await User.create({
+            username,email,
+            password:bcrypt.hashSync(password,8)
+        })
+        res.status(200).json({
+            message:"registered success"
+        }) 
+    } catch (error) {
+        console.log(error.message)
     }
-    if (password !== confirm_password){
-        return res.status(401).json({message:"password not matched"})
-    }
-    const alreadyRegistered=await User.find({email:email});
-    if(alreadyRegistered.length>0){
-        return res.status(401).json({message:"already registered"})
-    }
-    await User.create({
-        username,email,
-        password:bcrypt.hashSync(password,8)
-    })
-    res.status(200).json({
-        message:"registered success"
-    })
     
 })
 
 app.post('/login',async(req,res)=>{
-    const {email,password}=req.body;
+    try {
+        const {email,password}=req.body;
     // console.log(req.body)
     if(!email || !password){
         return res.status(402).json({message:"please enter email and password"})
@@ -58,6 +63,9 @@ app.post('/login',async(req,res)=>{
         else{
             res.status(401).json({message:"password not matched"})
         }
+    }
+    } catch (error) {
+        console.log(error.message)
     }
 
 })
